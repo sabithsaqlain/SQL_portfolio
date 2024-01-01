@@ -1,2 +1,2 @@
-# SQL_portfolio
-This repository contains SQL codes of various projects that I have done which will help the viewers understand the syntax used through various steps in the project 
+# SQL_projects
+This repository contains SQL codes of various projects related to data cleaning and EDA, this will assist the viewers to understand the syntax used throughout the steps in the project. 
