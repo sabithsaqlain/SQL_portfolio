@@ -1,0 +1,167 @@
+
+/*
+
+INTERNATIONAL FOOTBALL RESULTS EDA 
+
+Skills used: Joins, UNION, Temp Tables, Windows Functions, Aggregate Functions, Converting Data Types
+
+*/
+
+
+-- 1. Top 10 teams with most matches played in history
+
+SELECT 
+    team, COUNT(*) AS total_matches_played
+FROM
+    (SELECT 
+        home_team AS team
+    FROM
+        SQL_Projects.Results UNION ALL SELECT 
+        away_team AS team
+    FROM
+        SQL_Projects.Results) AS teams
+GROUP BY team
+ORDER BY total_matches_played DESC
+LIMIT 10;
+
+
+
+
+-- 2. Teams with most win percentage from total matches played 
+
+-- Considering teams that have played atleast 100 matches
+
+WITH AllMatches AS (
+    SELECT home_team AS team, home_score AS team_score, away_score AS opponent_score
+    FROM SQL_Projects.Results
+    UNION ALL
+    SELECT away_team AS team, away_score AS team_score, home_score AS opponent_score
+    FROM SQL_Projects.Results
+)
+SELECT team,
+       COUNT(*) AS total_matches,
+       SUM(CASE WHEN team_score > opponent_score THEN 1 ELSE 0 END) AS wins,
+       ROUND((SUM(CASE WHEN team_score > opponent_score THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 2) AS win_percentage
+FROM AllMatches
+GROUP BY team
+having total_matches > 100
+ORDER BY  win_percentage DESC
+Limit 10;
+
+
+
+
+-- 3. countries with most goals in international football 
+
+
+SELECT 
+    team, COUNT(team) AS number_of_goals
+FROM
+    SQLtutorial.Goalscorers
+GROUP BY team
+ORDER BY number_of_goals DESC;
+
+
+
+
+-- 4. Home wins vs Away wins at home venue
+
+-- Analyzing the home advantage factor
+
+WITH Home_matches AS
+
+(SELECT  date,concat(home_team,' vs ',away_team) Total_matches, 
+case
+    when home_score > away_score then "Home" 
+    when home_score < away_score then "Away"
+    else "Draw"
+end winning_side,
+
+FROM SQLtutorial.Matchresults
+WHERE CAST(neutral AS STRING) = "false"
+order by date desc
+)
+
+
+SELECT winning_side, count(winning_side) as No_of_wins,Round((count(winning_side)*100)/sum(count(Total_matches)) over() ,2) as win_percentage
+FROM Home_matches
+group by winning_side
+order by No_of_wins desc;
+
+
+
+
+-- 5.FIFA world cup top scorers 
+
+-- Top scorers in every edition of the world cup since 1930
+
+with FIFA_top_scorers as
+(select
+    EXTRACT(YEAR from Results.date) as Year ,Results.tournament, Scorers.team , Scorers.scorer
+from SQL_Projects.Results full outer join  
+    my-first-project-377510.SQL_Projects.Scorers on 
+    Results.date = Scorers.date and
+    Results.home_team = Scorers.home_team and 
+    Results.away_team = Scorers.away_team 
+where Scorers.date is not null
+order by Results.date) 
+
+select *
+from(select Year,team,scorer as topscorer,count(scorer) Goals,dense_rank() over(partition by Year order by count(scorer) desc) as rank 
+from FIFA_top_scorers
+where tournament = "FIFA World Cup"
+group by team,scorer,Year
+order by year desc) x
+where x.rank = 1;
+
+
+
+-- 6. Most shootout wins 
+
+-- Top 3 Teams with most shootout wins in major international tournaments
+
+
+with winners as (
+select * 
+from SQL_Projects.Results full outer join 
+SQL_Projects.Shootouts on 
+Results.date = Shootouts.date and
+Results.home_team = Shootouts.home_team and
+Results.away_team = Shootouts.away_team
+where Shootouts.first_shooter is not null
+order by Results.date)
+
+select * 
+from
+(select tournament, winner Shootout_winner, count(winner) as No_of_wins,dense_rank() over(partition by tournament order by count(winner) desc) rank
+from winners
+group by winner,tournament
+order by tournament,No_of_wins desc) x
+where rank <= 3;
+
+
+-- GEOPOLITICAL FACTORS IN FOOTBALL
+
+SELECT 
+    home_team AS Home_country,
+    away_team AS Away_country,
+    COUNT(*) AS matches_played
+FROM
+    SQL_Projects.Results
+GROUP BY home_team , away_team
+ORDER BY matches_played DESC
+LIMIT 10; 
+
+
+
+
+-- 8. Countries hosting the most matches without participating:
+
+SELECT 
+    country,
+    COUNT(*) AS matches_hosted
+FROM SQL_Projects.Results
+WHERE cast(neutral as string)= 'false' AND (home_team <> country AND away_team <> country)
+GROUP BY country
+ORDER BY matches_hosted DESC
+LIMIT 10; 
