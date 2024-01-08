@@ -72,10 +72,10 @@ WITH Home_matches AS
 
 (SELECT  date,concat(home_team,' vs ',away_team) Total_matches, 
 case
-    when home_score > away_score then "Home" 
-    when home_score < away_score then "Away"
+    when home_score > away_score then "Home win" 
+    when home_score < away_score then "Away win"
     else "Draw"
-end winning_side,
+end Match_results,
 
 FROM SQLtutorial.Matchresults
 WHERE CAST(neutral AS STRING) = "false"
@@ -83,10 +83,10 @@ order by date desc
 )
 
 
-SELECT winning_side, count(winning_side) as No_of_wins,Round((count(winning_side)*100)/sum(count(Total_matches)) over() ,2) as win_percentage
+SELECT Match_results, count(Match_results) as wins_and_draws, Round((count(Match_results)*100)/sum(count(Total_matches)) over() ,2) as percentage
 FROM Home_matches
-group by winning_side
-order by No_of_wins desc;
+group by Match_results
+order by wins_and_draws desc;
 
 
 
