@@ -140,7 +140,7 @@ order by tournament,No_of_wins desc) x
 where rank <= 3;
 
 
--- GEOPOLITICAL FACTORS IN FOOTBALL
+-- 7. Geopolitical Factors in football
 
 SELECT 
     home_team AS Home_country,
